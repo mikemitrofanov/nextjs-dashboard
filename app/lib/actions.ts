@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { CustomersTable } from "./definitions";
+import { signIn } from '@/auth'
 
 const prisma: PrismaClient = new PrismaClient();
 const FormSchema = z.object({
@@ -75,4 +76,17 @@ export async function deleteInvoice(id: string) {
     return { message: 'Database Error: Failed to Delete Invoice.' };
   }
   revalidatePath('/dashboard/invoices');
+}
+
+export async function authenticate(
+  prevState: string | undefined,
+  formData: FormData,
+) {
+  try {
+    await signIn('credentials', Object.fromEntries(formData));
+  } catch (error) {
+    if (error.type === 'CredentialsSignin') return 'CredentialsSignin';
+  }
+  
+  redirect(String(formData.get('callbackUrl')) || '/dashboard');
 }
